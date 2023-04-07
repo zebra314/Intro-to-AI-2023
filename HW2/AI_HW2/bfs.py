@@ -26,6 +26,7 @@ def bfs(start, end):
             data[3] = str(float(data[3])*1000/3600)  # convert km/hr to m/s
 
             graph[data[0]][data[1]] = (float(data[2]), float(data[3]))
+            graph[data[1]][data[0]] = (float(data[2]), float(data[3]))
 
     """
     Init the return values.
