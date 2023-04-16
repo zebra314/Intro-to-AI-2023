@@ -134,7 +134,41 @@ class MinimaxAgent(MultiAgentSearchAgent):
         Returns whether or not the game state is a losing state
         """
         # Begin your code (Part 1)
-        raise NotImplementedError("To be implemented")
+        # raise NotImplementedError("To be implemented")
+        nextAction = self.performMinimax(1, self.index, gameState)
+        return nextAction
+
+    def performMinimax(self, depth, agentIndex, gameState):
+        if (gameState.isWin() or gameState.isLose() or depth > self.depth):
+            return self.evaluationFunction(gameState)
+
+        scores = []
+        maxscores = []
+
+        legalMoves = gameState.getLegalActions(agentIndex)
+        nextIndex = (agentIndex + 1) % gameState.getNumAgents()
+        
+        if Directions.STOP in legalMoves:
+            legalMoves.remove(Directions.STOP)
+        
+        for move in legalMoves:
+            nextState = gameState.getNextState(agentIndex, move)
+            if nextIndex == 0:
+                depth += 1
+            scores.append(self.performMinimax(depth, nextIndex, nextState))
+        
+        if agentIndex > 0: # if ghost, min
+            return min(scores)
+        elif agentIndex == 0 and not depth == 1: # if pacman but not root, max
+            return max(scores)
+        
+        # if pacman and root
+        maxscore = max(scores)
+        for i in range(len(scores)):
+            if scores[i] == maxscore:
+                maxscores.append(legalMoves[i])
+        choisenIndex = random.choice(maxscores)
+        return choisenIndex
         # End your code (Part 1)
 
 
@@ -148,7 +182,53 @@ class AlphaBetaAgent(MultiAgentSearchAgent):
         Returns the minimax action using self.depth and self.evaluationFunction
         """
         # Begin your code (Part 2)
-        raise NotImplementedError("To be implemented")
+        # raise NotImplementedError("To be implemented")
+        alpha = float("-inf")
+        beta = float("inf")
+        nextAction = self.performAlphaBeta(1, self.index, gameState, alpha, beta)
+        return nextAction
+    
+    def performAlphaBeta(self, depth, agentIndex, gameState, alpha, beta):
+        if (gameState.isWin() or gameState.isLose() or depth > self.depth):
+            return self.evaluationFunction(gameState)
+        
+        scores = []
+        maxscores = []
+
+        legalMoves = gameState.getLegalActions(agentIndex)
+        nextIndex = (agentIndex + 1) % gameState.getNumAgents()
+        
+        if Directions.STOP in legalMoves:
+            legalMoves.remove(Directions.STOP)
+        
+        for move in legalMoves:
+            nextState = gameState.getNextState(agentIndex, move)
+            if nextIndex == 0:
+                depth += 1
+            score = self.performAlphaBeta(depth, nextIndex, nextState, alpha, beta)
+
+            if ( agentIndex == 0 and score > beta ) \
+            or ( agentIndex > 0 and score < alpha ) :
+                return score
+        
+            if (agentIndex == 0 and score > alpha):
+                alpha = score
+            if (agentIndex > 0 and score < beta) :
+                beta = score
+            scores.append(score)
+            
+        if agentIndex > 0: # if ghost, min
+            return min(scores)
+        elif agentIndex == 0 and not depth == 1: # if pacman but not root, max
+            return max(scores)
+        
+        # if pacman and root
+        maxscore = max(scores)
+        for i in range(len(scores)):
+            if scores[i] == maxscore:
+                maxscores.append(legalMoves[i])
+        choisenIndex = random.choice(maxscores)
+        return choisenIndex
         # End your code (Part 2)
 
 
