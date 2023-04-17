@@ -135,16 +135,14 @@ class MinimaxAgent(MultiAgentSearchAgent):
         """
         # Begin your code (Part 1)
         # raise NotImplementedError("To be implemented")
-        nextAction = self.performMinimax(1, self.index, gameState)
+        nextAction = self.performMinimax(0, self.index, gameState)
         return nextAction
 
     def performMinimax(self, depth, agentIndex, gameState):
-        if (gameState.isWin() or gameState.isLose() or depth > self.depth):
+        if (gameState.isWin() or gameState.isLose() or depth >= self.depth):
             return self.evaluationFunction(gameState)
 
         scores = []
-        maxscores = []
-
         legalMoves = gameState.getLegalActions(agentIndex)
         nextIndex = (agentIndex + 1) % gameState.getNumAgents()
         
@@ -159,16 +157,14 @@ class MinimaxAgent(MultiAgentSearchAgent):
         
         if agentIndex > 0: # if ghost, min
             return min(scores)
-        elif agentIndex == 0 and not depth == 1: # if pacman but not root, max
+        elif agentIndex == 0 and not depth == 0: # if pacman but not root, max
             return max(scores)
         
         # if pacman and root
         maxscore = max(scores)
-        for i in range(len(scores)):
-            if scores[i] == maxscore:
-                maxscores.append(legalMoves[i])
-        choisenIndex = random.choice(maxscores)
-        return choisenIndex
+        bestIndices = [index for index in range(len(scores)) if scores[index] == maxscore]
+        choisenIndex = random.choice(bestIndices)
+        return legalMoves[choisenIndex]
         # End your code (Part 1)
 
 
@@ -193,8 +189,6 @@ class AlphaBetaAgent(MultiAgentSearchAgent):
             return self.evaluationFunction(gameState)
         
         scores = []
-        maxscores = []
-
         legalMoves = gameState.getLegalActions(agentIndex)
         nextIndex = (agentIndex + 1) % gameState.getNumAgents()
         
@@ -224,11 +218,9 @@ class AlphaBetaAgent(MultiAgentSearchAgent):
         
         # if pacman and root
         maxscore = max(scores)
-        for i in range(len(scores)):
-            if scores[i] == maxscore:
-                maxscores.append(legalMoves[i])
-        choisenIndex = random.choice(maxscores)
-        return choisenIndex
+        bestIndices = [index for index in range(len(scores)) if scores[index] == maxscore]
+        choisenIndex = random.choice(bestIndices)
+        return legalMoves[choisenIndex]
         # End your code (Part 2)
 
 
@@ -245,7 +237,39 @@ class ExpectimaxAgent(MultiAgentSearchAgent):
         legal moves.
         """
         # Begin your code (Part 3)
-        raise NotImplementedError("To be implemented")
+        # raise NotImplementedError("To be implemented")
+        nextAction = self.performExpectimax(1, self.index, gameState)
+        return nextAction
+
+    def performExpectimax(self, depth, agentIndex, gameState):
+        if (gameState.isWin() or gameState.isLose() or depth > self.depth):
+            return self.evaluationFunction(gameState)
+
+        scores = []
+        legalMoves = gameState.getLegalActions(agentIndex)
+        nextIndex = (agentIndex + 1) % gameState.getNumAgents()
+        
+        if Directions.STOP in legalMoves:
+            legalMoves.remove(Directions.STOP)
+        
+        for move in legalMoves:
+            nextState = gameState.getNextState(agentIndex, move)
+            if nextIndex == 0:
+                depth += 1
+            scores.append(self.performExpectimax(depth, nextIndex, nextState))
+        
+        if agentIndex > 0: # if ghost, min
+            s = sum(scores)
+            l = len(scores)
+            return float(s/l)
+        elif agentIndex == 0 and not depth == 1: # if pacman but not root, max
+            return max(scores)
+        
+        # if pacman and root
+        maxscore = max(scores)
+        bestIndices = [index for index in range(len(scores)) if scores[index] == maxscore]
+        choisenIndex = random.choice(bestIndices)
+        return legalMoves[choisenIndex]
         # End your code (Part 3)
 
 
