@@ -281,75 +281,30 @@ def betterEvaluationFunction(currentGameState):
     """
     # Begin your code (Part 4)
     # raise NotImplementedError("To be implemented")
-
-    # pacman_position = currentGameState.getPacmanPosition()
-    # ghost_positions = currentGameState.getGhostPositions()
-
-    # food_list = currentGameState.getFood().asList()
-    # food_count = len(food_list)
-    # capsule_count = len(currentGameState.getCapsules())
-    # closest_food = 1
-
-    # game_score = currentGameState.getScore()
-
-    # # Find distances from pacman to all food
-    # food_distances = [manhattanDistance(pacman_position, food_position) for food_position in food_list]
-
-    # # Set value for closest food if there is still food left
-    # if food_count > 0:
-    #     closest_food = min(food_distances)
-
-    # # Find distances from pacman to ghost(s)
-    # for ghost_position in ghost_positions:
-    #     ghost_distance = manhattanDistance(pacman_position, ghost_position)
-
-    #     # If ghost is too close to pacman, prioritize escaping instead of eating the closest food
-    #     # by resetting the value for closest distance to food
-    #     if ghost_distance < 2:
-    #         closest_food = 99999
-
-    # features = [1.0 / closest_food,
-    #             game_score,
-    #             food_count,
-    #             capsule_count]
-
-    # weights = [10,
-    #            200,
-    #            -10,
-    #            -100]
-
-    # Linear combination of features
-    # return sum([feature * weight for feature, weight in zip(features, weights)])
-
     pacmanPos = currentGameState.getPacmanPosition()
     ghostsState = [(manhattanDistance(pacmanPos, currentGameState.getGhostPosition(Id)), Id) for Id in range(1, currentGameState.getNumAgents())]
     minGhostDist, minGhostId = (0, 0) if len(ghostsState) == 0 else min(ghostsState)
-    ghostsDist = [x for x, y in ghostsState]
 
-    # print(minGhostDist)
-    isEat = currentGameState.data.agentStates[minGhostId].scaredTimer > 1
+    isScared = currentGameState.data.agentStates[minGhostId].scaredTimer > 1
     curScore = currentGameState.getScore()
-    
+
     # food
     foodDist = [manhattanDistance(pacmanPos, food) for food in currentGameState.getFood().asList()]
     numFood = currentGameState.getNumFood()
     minFoodDist = 1 if numFood == 0 else min(foodDist)
-    avgFoodDist = 1 if numFood == 0 else sum(foodDist) / len(foodDist)
 
     # capsules
     numCapsules = len(currentGameState.getCapsules())
     capsulesDist = [manhattanDistance(pacmanPos, capsule) for capsule in currentGameState.getCapsules()]
-    minCapsuleDist = 0 if len(currentGameState.getCapsules()) == 0 else min( capsulesDist )
-
-    if isEat:
-        return 100 * curScore + (-30 * minGhostDist)
+    minCapsuleDist = float('inf') if len(currentGameState.getCapsules()) == 0 else min( capsulesDist )
     
-    if minCapsuleDist < 6 :
-        return 100 * curScore + (-50 * numCapsules )  + (-30 * minCapsuleDist) + (-20 * minGhostDist)
-    
-    if numCapsules == 0:
-        return 100 * curScore + (-30 * minFoodDist) + (-30* numFood) + (30 * minGhostDist)
-    return 80 * curScore + (-30 * minFoodDist) + (-30 * numFood) + (-20 * minCapsuleDist)  + (-20 * numCapsules)  + (-10 * minGhostDist)
+    if isScared:
+        return 11 * curScore + (-6 * minGhostDist)
+    elif minCapsuleDist < 6 :
+        return 9 * curScore + (-5 * numCapsules )  + (-5 * minCapsuleDist)+ (-1 * minFoodDist) + (-1 * numFood)
+    elif numCapsules == 0:
+        return 10 * curScore + (-4 * minFoodDist) + (-4* numFood) 
+    return 8 * curScore + (-4 * minFoodDist) + (-4 * numFood) + (-4 * minCapsuleDist)  + (-4 * numCapsules)
     # End your code (Part 4)
 
 # Abbreviation
