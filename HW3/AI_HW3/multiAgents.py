@@ -135,36 +135,37 @@ class MinimaxAgent(MultiAgentSearchAgent):
         """
         # Begin your code (Part 1)
         # raise NotImplementedError("To be implemented")
-        nextAction = self.performMinimax(0, self.index, gameState)
+        __, nextAction = self.performMinimax(0, self.index, gameState)
         return nextAction
 
     def performMinimax(self, depth, agentIndex, gameState):
         if (gameState.isWin() or gameState.isLose() or depth >= self.depth):
-            return self.evaluationFunction(gameState)
-
-        scores = []
-        legalMoves = gameState.getLegalActions(agentIndex)
-        nextIndex = (agentIndex + 1) % gameState.getNumAgents()
+            return self.evaluationFunction(gameState), None
         
+        scores = []
+        isMinplayer = True if agentIndex != 0 else False
+        bestScore = float("inf") if isMinplayer else float("-inf")
+        legalMoves = gameState.getLegalActions(agentIndex)
+        nextIndex = (agentIndex + 1) % gameState.getNumAgents() # 0 -> 1 -> 2 -> 0 -> 1 -> 2 -> ...
+        
+        if nextIndex == 0:
+            depth +=1
+
         if Directions.STOP in legalMoves:
             legalMoves.remove(Directions.STOP)
-        
+
         for move in legalMoves:
             nextState = gameState.getNextState(agentIndex, move)
-            if nextIndex == 0:
-                depth += 1
-            scores.append(self.performMinimax(depth, nextIndex, nextState))
+            nextValue, __ = self.performMinimax(depth, nextIndex, nextState)
+            bestScore = min(bestScore, nextValue) if isMinplayer else max(bestScore, nextValue)
+            scores.append(nextValue)
         
-        if agentIndex > 0: # if ghost, min
-            return min(scores)
-        elif agentIndex == 0 and not depth == 0: # if pacman but not root, max
-            return max(scores)
-        
-        # if pacman and root
-        maxscore = max(scores)
-        bestIndices = [index for index in range(len(scores)) if scores[index] == maxscore]
-        choisenIndex = random.choice(bestIndices)
-        return legalMoves[choisenIndex]
+        if isMinplayer:
+            return bestScore, None
+        else:
+            bestIndices = [index for index in range(len(scores)) if scores[index] == bestScore]
+            choisenIndex = random.choice(bestIndices)
+            return max(scores), legalMoves[choisenIndex]
         # End your code (Part 1)
 
 
@@ -179,48 +180,46 @@ class AlphaBetaAgent(MultiAgentSearchAgent):
         """
         # Begin your code (Part 2)
         # raise NotImplementedError("To be implemented")
-        alpha = float("-inf")
-        beta = float("inf")
-        nextAction = self.performAlphaBeta(1, self.index, gameState, alpha, beta)
+        alpha, beta = float("-inf"), float("inf")
+        __, nextAction = self.performAlphaBeta(0, self.index, gameState, alpha, beta)
         return nextAction
-    
+
     def performAlphaBeta(self, depth, agentIndex, gameState, alpha, beta):
-        if (gameState.isWin() or gameState.isLose() or depth > self.depth):
-            return self.evaluationFunction(gameState)
+        if (gameState.isWin() or gameState.isLose() or depth >= self.depth):
+            return self.evaluationFunction(gameState), None
         
         scores = []
+        isMinplayer = True if agentIndex != 0 else False
+        bestScore = float("inf") if isMinplayer else float("-inf")
         legalMoves = gameState.getLegalActions(agentIndex)
-        nextIndex = (agentIndex + 1) % gameState.getNumAgents()
+        nextIndex = (agentIndex + 1) % gameState.getNumAgents() # 0 -> 1 -> 2 -> 0 -> 1 -> 2 -> ...
+        
+        if nextIndex == 0:
+            depth +=1
         
         if Directions.STOP in legalMoves:
             legalMoves.remove(Directions.STOP)
-        
+
         for move in legalMoves:
             nextState = gameState.getNextState(agentIndex, move)
-            if nextIndex == 0:
-                depth += 1
-            score = self.performAlphaBeta(depth, nextIndex, nextState, alpha, beta)
-
-            if ( agentIndex == 0 and score > beta ) \
-            or ( agentIndex > 0 and score < alpha ) :
-                return score
+            nextValue, __ = self.performAlphaBeta(depth, nextIndex, nextState, alpha, beta)
+            bestScore = min(bestScore, nextValue) if isMinplayer else max(bestScore, nextValue)
+            if isMinplayer :
+                if nextValue < alpha:
+                    return nextValue, None
+                beta = min(beta, bestScore)
+            else: 
+                if nextValue > beta:
+                    return nextValue, move
+                alpha = max(alpha, nextValue)
+            scores.append(nextValue)
         
-            if (agentIndex == 0 and score > alpha):
-                alpha = score
-            if (agentIndex > 0 and score < beta) :
-                beta = score
-            scores.append(score)
-            
-        if agentIndex > 0: # if ghost, min
-            return min(scores)
-        elif agentIndex == 0 and not depth == 1: # if pacman but not root, max
-            return max(scores)
-        
-        # if pacman and root
-        maxscore = max(scores)
-        bestIndices = [index for index in range(len(scores)) if scores[index] == maxscore]
-        choisenIndex = random.choice(bestIndices)
-        return legalMoves[choisenIndex]
+        if isMinplayer:
+            return bestScore, None
+        else:
+            bestIndices = [index for index in range(len(scores)) if scores[index] == bestScore]
+            choisenIndex = random.choice(bestIndices)
+            return max(scores), legalMoves[choisenIndex]
         # End your code (Part 2)
 
 
@@ -238,38 +237,40 @@ class ExpectimaxAgent(MultiAgentSearchAgent):
         """
         # Begin your code (Part 3)
         # raise NotImplementedError("To be implemented")
-        nextAction = self.performExpectimax(1, self.index, gameState)
+
+        __, nextAction = self.performExpectimax(0, self.index, gameState)
         return nextAction
 
     def performExpectimax(self, depth, agentIndex, gameState):
-        if (gameState.isWin() or gameState.isLose() or depth > self.depth):
-            return self.evaluationFunction(gameState)
-
-        scores = []
-        legalMoves = gameState.getLegalActions(agentIndex)
-        nextIndex = (agentIndex + 1) % gameState.getNumAgents()
+        if (gameState.isWin() or gameState.isLose() or depth >= self.depth):
+            return self.evaluationFunction(gameState), None
         
+        scores = []
+        isMinplayer = True if agentIndex != 0 else False
+        bestScore = float("inf") if isMinplayer else float("-inf")
+        legalMoves = gameState.getLegalActions(agentIndex)
+        nextIndex = (agentIndex + 1) % gameState.getNumAgents() # 0 -> 1 -> 2 -> 0 -> 1 -> 2 -> ...
+        
+        if nextIndex == 0:
+            depth +=1
+
         if Directions.STOP in legalMoves:
             legalMoves.remove(Directions.STOP)
-        
+
         for move in legalMoves:
             nextState = gameState.getNextState(agentIndex, move)
-            if nextIndex == 0:
-                depth += 1
-            scores.append(self.performExpectimax(depth, nextIndex, nextState))
+            nextValue, __ = self.performExpectimax(depth, nextIndex, nextState)
+            bestScore = min(bestScore, nextValue) if isMinplayer else max(bestScore, nextValue)
+            scores.append(nextValue)
         
-        if agentIndex > 0: # if ghost, min
+        if isMinplayer:
             s = sum(scores)
             l = len(scores)
-            return float(s/l)
-        elif agentIndex == 0 and not depth == 1: # if pacman but not root, max
-            return max(scores)
-        
-        # if pacman and root
-        maxscore = max(scores)
-        bestIndices = [index for index in range(len(scores)) if scores[index] == maxscore]
-        choisenIndex = random.choice(bestIndices)
-        return legalMoves[choisenIndex]
+            return s/l, None
+        else:
+            bestIndices = [index for index in range(len(scores)) if scores[index] == bestScore]
+            choisenIndex = random.choice(bestIndices)
+            return max(scores), legalMoves[choisenIndex]
         # End your code (Part 3)
 
 
