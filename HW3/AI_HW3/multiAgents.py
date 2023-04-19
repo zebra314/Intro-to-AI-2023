@@ -305,7 +305,8 @@ def betterEvaluationFunction(currentGameState):
 
     # Ghosts
     pacmanPos = currentGameState.getPacmanPosition()
-    ghostsState = [(manhattanDistance(pacmanPos, currentGameState.getGhostPosition(Id)), Id) for Id in range(1, currentGameState.getNumAgents())]
+    ghostsState = [(manhattanDistance(pacmanPos, currentGameState.getGhostPosition(Id)), Id)\
+                    for Id in range(1, currentGameState.getNumAgents())]
     minGhostDist, minGhostId = (0, 0) if len(ghostsState) == 0 else min(ghostsState)
     isScared = currentGameState.data.agentStates[minGhostId].scaredTimer > 1
 
