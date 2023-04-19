@@ -139,27 +139,33 @@ class MinimaxAgent(MultiAgentSearchAgent):
         return nextAction
 
     def performMinimax(self, depth, agentIndex, gameState):
+        # Return the score if the game is over or the depth is reached
         if (gameState.isWin() or gameState.isLose() or depth >= self.depth):
             return self.evaluationFunction(gameState), None
         
+        # Init variables and lists
         scores = []
         isMinplayer = True if agentIndex != 0 else False
         bestScore = float("inf") if isMinplayer else float("-inf")
         legalMoves = gameState.getLegalActions(agentIndex)
         nextIndex = (agentIndex + 1) % gameState.getNumAgents() # 0 -> 1 -> 2 -> 0 -> 1 -> 2 -> ...
         
+        # Increase depth if the next agent is pacman
         if nextIndex == 0:
             depth +=1
 
+        # Remove the stop action to avoid some extreme cases
         if Directions.STOP in legalMoves:
             legalMoves.remove(Directions.STOP)
 
+        # Perform minimax
         for move in legalMoves:
             nextState = gameState.getNextState(agentIndex, move)
             nextValue, __ = self.performMinimax(depth, nextIndex, nextState)
             bestScore = min(bestScore, nextValue) if isMinplayer else max(bestScore, nextValue)
             scores.append(nextValue)
         
+        # Return the best score and the next action
         if isMinplayer:
             return bestScore, None
         else:
@@ -185,25 +191,32 @@ class AlphaBetaAgent(MultiAgentSearchAgent):
         return nextAction
 
     def performAlphaBeta(self, depth, agentIndex, gameState, alpha, beta):
+        # Return the score if the game is over or the depth is reached
         if (gameState.isWin() or gameState.isLose() or depth >= self.depth):
             return self.evaluationFunction(gameState), None
         
+        # Init variables and lists
         scores = []
         isMinplayer = True if agentIndex != 0 else False
         bestScore = float("inf") if isMinplayer else float("-inf")
         legalMoves = gameState.getLegalActions(agentIndex)
         nextIndex = (agentIndex + 1) % gameState.getNumAgents() # 0 -> 1 -> 2 -> 0 -> 1 -> 2 -> ...
         
+        # Increase depth if the next agent is pacman
         if nextIndex == 0:
             depth +=1
         
+        # Remove the stop action to avoid some extreme cases
         if Directions.STOP in legalMoves:
             legalMoves.remove(Directions.STOP)
 
+        # Perform alpha-beta pruning
         for move in legalMoves:
             nextState = gameState.getNextState(agentIndex, move)
             nextValue, __ = self.performAlphaBeta(depth, nextIndex, nextState, alpha, beta)
             bestScore = min(bestScore, nextValue) if isMinplayer else max(bestScore, nextValue)
+            
+            # Pruning
             if isMinplayer :
                 if nextValue < alpha:
                     return nextValue, None
@@ -214,6 +227,7 @@ class AlphaBetaAgent(MultiAgentSearchAgent):
                 alpha = max(alpha, nextValue)
             scores.append(nextValue)
         
+        # Return the best score and the next action
         if isMinplayer:
             return bestScore, None
         else:
@@ -237,32 +251,37 @@ class ExpectimaxAgent(MultiAgentSearchAgent):
         """
         # Begin your code (Part 3)
         # raise NotImplementedError("To be implemented")
-
         __, nextAction = self.performExpectimax(0, self.index, gameState)
         return nextAction
 
     def performExpectimax(self, depth, agentIndex, gameState):
+        # Return the score if the game is over or the depth is reached
         if (gameState.isWin() or gameState.isLose() or depth >= self.depth):
             return self.evaluationFunction(gameState), None
         
+        # Init variables and lists
         scores = []
         isMinplayer = True if agentIndex != 0 else False
         bestScore = float("inf") if isMinplayer else float("-inf")
         legalMoves = gameState.getLegalActions(agentIndex)
         nextIndex = (agentIndex + 1) % gameState.getNumAgents() # 0 -> 1 -> 2 -> 0 -> 1 -> 2 -> ...
         
+        # Increase depth if the next agent is pacman
         if nextIndex == 0:
             depth +=1
 
+        # Remove the stop action to avoid some extreme cases
         if Directions.STOP in legalMoves:
             legalMoves.remove(Directions.STOP)
 
+        # Perform expectimax
         for move in legalMoves:
             nextState = gameState.getNextState(agentIndex, move)
             nextValue, __ = self.performExpectimax(depth, nextIndex, nextState)
             bestScore = min(bestScore, nextValue) if isMinplayer else max(bestScore, nextValue)
             scores.append(nextValue)
         
+        # Return the best score and the next action
         if isMinplayer:
             s = sum(scores)
             l = len(scores)
@@ -281,30 +300,43 @@ def betterEvaluationFunction(currentGameState):
     """
     # Begin your code (Part 4)
     # raise NotImplementedError("To be implemented")
+    # Score
+    curScore = currentGameState.getScore()
+
+    # Ghosts
     pacmanPos = currentGameState.getPacmanPosition()
     ghostsState = [(manhattanDistance(pacmanPos, currentGameState.getGhostPosition(Id)), Id) for Id in range(1, currentGameState.getNumAgents())]
     minGhostDist, minGhostId = (0, 0) if len(ghostsState) == 0 else min(ghostsState)
-
     isScared = currentGameState.data.agentStates[minGhostId].scaredTimer > 1
-    curScore = currentGameState.getScore()
 
-    # food
+    # Food
     foodDist = [manhattanDistance(pacmanPos, food) for food in currentGameState.getFood().asList()]
     numFood = currentGameState.getNumFood()
     minFoodDist = 1 if numFood == 0 else min(foodDist)
 
-    # capsules
+    # Capsules
     numCapsules = len(currentGameState.getCapsules())
     capsulesDist = [manhattanDistance(pacmanPos, capsule) for capsule in currentGameState.getCapsules()]
-    minCapsuleDist = float('inf') if len(currentGameState.getCapsules()) == 0 else min( capsulesDist )
+    minCapsuleDist = float(9999999) if len(currentGameState.getCapsules()) == 0 else min( capsulesDist )
     
+    # Init variables and weight 
+    variables = [curScore, minGhostDist, numCapsules, minCapsuleDist, minFoodDist, numFood]
+    weight = [  [11, -6, 0, 0, 0, 0],   # isScared
+                [9, 0, -5, -5, -1, -1], # minCapsuleDist < 6
+                [10, 0, 0, 0, -4, -4],  # numCapsules == 0
+                [9, 1, -5, -5, -4, -4]  # default
+            ]
+    
+    # Return the score
     if isScared:
-        return 11 * curScore + (-6 * minGhostDist)
+        weightNum = 0
     elif minCapsuleDist < 6 :
-        return 9 * curScore + (-5 * numCapsules )  + (-5 * minCapsuleDist)+ (-1 * minFoodDist) + (-1 * numFood)
+        weightNum = 1
     elif numCapsules == 0:
-        return 10 * curScore + (-4 * minFoodDist) + (-4* numFood) 
-    return 8 * curScore + (-4 * minFoodDist) + (-4 * numFood) + (-4 * minCapsuleDist)  + (-4 * numCapsules)
+        weightNum = 2
+    else :
+        weightNum = 3 # default
+    return sum([ x*y for x, y in zip(variables, weight[weightNum]) ])
     # End your code (Part 4)
 
 # Abbreviation
