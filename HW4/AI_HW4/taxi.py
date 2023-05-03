@@ -2,6 +2,7 @@ import numpy as np
 import os
 import gym
 from tqdm import tqdm
+# import time
 
 total_reward = []
 
@@ -39,7 +40,15 @@ class Agent():
         """
         # Begin your code
         # TODO
-        raise NotImplementedError("Not implemented yet.")
+        # raise NotImplementedError("Not implemented yet.")
+        # Choose the best action according to the qtable and epsilon
+        if np.random.uniform(0, 1) > self.epsilon :
+            # Explore
+            action = self.env.action_space.sample()
+        else:
+            # Exploit
+            action = np.argmax(self.qtable[state])
+        return action
         # End your code
 
     def learn(self, state, action, reward, next_state, done):
@@ -58,7 +67,17 @@ class Agent():
         """
         # Begin your code
         # TODO
-        raise NotImplementedError("Not implemented yet.")
+        # raise NotImplementedError("Not implemented yet.")
+        # Calculate the new Q-value based on the Q-learning formula
+        q_next = np.max(self.qtable[next_state])if not done else 0
+        q_current = self.qtable[state, action]
+
+        # Update the Q-table with the new Q-value
+        q_newValue = (1 - self.learning_rate) * q_current + self.learning_rate \
+                    * (reward + self.gamma * q_next)
+
+        # Record the Q-value
+        self.qtable[state, action] = q_newValue
         # End your code
         np.save("./Tables/taxi_table.npy", self.qtable)
 
@@ -74,8 +93,11 @@ class Agent():
         """
         # Begin your code
         # TODO
-        raise NotImplementedError("Not implemented yet.")
-        # End your code
+        # raise NotImplementedError("Not implemented yet.")
+        # Find the max Q-value of the given state
+        max_q = np.max(self.qtable[state])
+        return max_q
+        # End your code"
 
 
 def extract_state(ori_state):
@@ -118,6 +140,10 @@ def train(env):
 
             training_agent.learn(state, action, reward, next_state, done)
             count += reward
+
+            # Obswrve the enviornment
+            # env.render(mode = "human")
+            # time.sleep(0.01)
 
             if done:
                 rewards.append(count)
