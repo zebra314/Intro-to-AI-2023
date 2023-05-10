@@ -42,7 +42,7 @@ class Agent():
         # TODO
         # raise NotImplementedError("Not implemented yet.")
         # Choose the best action according to the qtable and epsilon
-        if np.random.uniform(0, 1) > self.epsilon :
+        if np.random.uniform(0, 1) > self.epsilon or np.sum(self.qtable[state]) == 0:
             # Explore
             action = self.env.action_space.sample()
         else:
