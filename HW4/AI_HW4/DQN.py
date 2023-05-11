@@ -133,18 +133,22 @@ class Agent():
         # Begin your code
         # TODO
         # raise NotImplementedError("Not implemented yet.")
+        # Sample trajectories of batch size from the replay buffer.
         observations, actions, rewards, next_observations, done = self.buffer.sample(self.batch_size)
         
+        # Forward the data to the evaluate net and the target net.
         observations = torch.FloatTensor(np.array(observations))
         actions = torch.LongTensor(actions)
         rewards = torch.FloatTensor(rewards)
         next_observations = torch.FloatTensor(np.array(next_observations))
         done = torch.BoolTensor(done)
         
+        # Compute the loss with MSE.
         evaluate = self.evaluate_net(observations).gather(1, actions.reshape(self.batch_size, 1))
         nextMax = self.target_net(next_observations).detach()
         target = rewards.reshape(self.batch_size, 1) + self.gamma * nextMax.max(1)[0].view(self.batch_size, 1) * (~done).reshape(self.batch_size, 1)
         
+        # Zero-out the gradients.
         MSE = nn.MSELoss()
         loss = MSE(evaluate, target)
         self.optimizer.zero_grad()

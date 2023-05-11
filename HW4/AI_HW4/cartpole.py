@@ -55,6 +55,7 @@ class Agent():
         # Begin your code
         # TODO
         # raise NotImplementedError("Not implemented yet.")
+        # Slice the interval into #num_bins parts
         array = np.linspace(lower_bound, upper_bound, num_bins + 1)
         return array[1:-1]
         # End your code
@@ -76,6 +77,7 @@ class Agent():
         # Begin your code
         # TODO
         # raise NotImplementedError("Not implemented yet.")
+        # Discretize the value with given bins
         return np.digitize(value, bins)
         # End your code
 
@@ -101,6 +103,7 @@ class Agent():
         # raise NotImplementedError("Not implemented yet.")
         state = []
         for index in range(4):
+            # Discretize the observation
             state.append( self.discretize_value(observation[index], self.bins[index]) )
         return state
         # End your code
