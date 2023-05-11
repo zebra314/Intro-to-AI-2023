@@ -79,7 +79,7 @@ class Net(nn.Module):
 
 
 class Agent():
-    def __init__(self, env, epsilon=0.95, learning_rate=0.0002, GAMMA=0.97, batch_size=32, capacity=10000):
+    def __init__(self, env, epsilon=0.05, learning_rate=0.0002, GAMMA=0.97, batch_size=32, capacity=10000):
         """
         The agent learning how to control the action of the cart pole.
         Hyperparameters:
@@ -132,7 +132,24 @@ class Agent():
 
         # Begin your code
         # TODO
-        raise NotImplementedError("Not implemented yet.")
+        # raise NotImplementedError("Not implemented yet.")
+        observations, actions, rewards, next_observations, done = self.buffer.sample(self.batch_size)
+        
+        observations = torch.FloatTensor(np.array(observations))
+        actions = torch.LongTensor(actions)
+        rewards = torch.FloatTensor(rewards)
+        next_observations = torch.FloatTensor(np.array(next_observations))
+        done = torch.BoolTensor(done)
+        
+        evaluate = self.evaluate_net(observations).gather(1, actions.reshape(self.batch_size, 1))
+        nextMax = self.target_net(next_observations).detach()
+        target = rewards.reshape(self.batch_size, 1) + self.gamma * nextMax.max(1)[0].view(self.batch_size, 1) * (~done).reshape(self.batch_size, 1)
+        
+        MSE = nn.MSELoss()
+        loss = MSE(evaluate, target)
+        self.optimizer.zero_grad()
+        loss.backward()
+        self.optimizer.step()
         # End your code
         torch.save(self.target_net.state_dict(), "./Tables/DQN.pt")
 
@@ -151,7 +168,11 @@ class Agent():
         with torch.no_grad():
             # Begin your code
             # TODO
-            raise NotImplementedError("Not implemented yet.")
+            # raise NotImplementedError("Not implemented yet.")
+            if random.uniform(0,1) < self.epsilon:
+                action = self.env.action_space.sample()
+            else:
+                action = torch.argmax(self.evaluate_net.forward(torch.FloatTensor(state))).item()
             # End your code
         return action
 
@@ -168,7 +189,9 @@ class Agent():
         """
         # Begin your code
         # TODO
-        raise NotImplementedError("Not implemented yet.")
+        # raise NotImplementedError("Not implemented yet.")
+        max_q = torch.max(self.evaluate_net.forward(torch.FloatTensor(self.env.reset()))).item()
+        return max_q
         # End your code
 
 
