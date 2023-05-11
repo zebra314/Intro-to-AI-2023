@@ -8,7 +8,7 @@ total_reward = []
 
 
 class Agent():
-    def __init__(self, env, epsilon=0.95, learning_rate=0.8, gamma=0.9):
+    def __init__(self, env, epsilon=0.05, learning_rate=0.8, gamma=0.9):
         """
         Parameters:
             env: target enviornment.
@@ -42,7 +42,7 @@ class Agent():
         # TODO
         # raise NotImplementedError("Not implemented yet.")
         # Choose the best action according to the qtable and epsilon
-        if np.random.uniform(0, 1) > self.epsilon or np.sum(self.qtable[state]) == 0:
+        if np.random.uniform(0, 1) < self.epsilon or np.sum(self.qtable[state]) == 0:
             # Explore
             action = self.env.action_space.sample()
         else:
