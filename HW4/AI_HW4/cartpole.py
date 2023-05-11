@@ -9,7 +9,7 @@ decay = 0.045
 
 
 class Agent():
-    def __init__(self, env, epsilon=0.95, learning_rate=0.5, GAMMA=0.97, num_bins=7):
+    def __init__(self, env, epsilon=0.05, learning_rate=0.5, GAMMA=0.97, num_bins=7):
         """
         The agent learning how to control the action of the cart pole.
         Hyperparameters:
@@ -54,7 +54,9 @@ class Agent():
         """
         # Begin your code
         # TODO
-        raise NotImplementedError("Not implemented yet.")
+        # raise NotImplementedError("Not implemented yet.")
+        array = np.linspace(lower_bound, upper_bound, num_bins + 1)
+        return array[1:-1]
         # End your code
 
     def discretize_value(self, value, bins):
@@ -73,11 +75,13 @@ class Agent():
         """
         # Begin your code
         # TODO
-        raise NotImplementedError("Not implemented yet.")
+        # raise NotImplementedError("Not implemented yet.")
+        return np.digitize(value, bins)
         # End your code
 
     def discretize_observation(self, observation):
-        """
+        """s
+        
         Discretize the observation which we observed from a continuous state space.
         Parameters:
             observation: The observation to be discretized, which is a list of 4 features:
@@ -94,7 +98,11 @@ class Agent():
         """
         # Begin your code
         # TODO
-        raise NotImplementedError("Not implemented yet.")
+        # raise NotImplementedError("Not implemented yet.")
+        state = []
+        for index in range(4):
+            state.append( self.discretize_value(observation[index], self.bins[index]) )
+        return state
         # End your code
 
     def choose_action(self, state):
@@ -108,7 +116,15 @@ class Agent():
         """
         # Begin your code
         # TODO
-        raise NotImplementedError("Not implemented yet.")
+        # raise NotImplementedError("Not implemented yet.")
+        # Choose the best action according to the qtable and epsilon
+        if np.random.uniform(0, 1) < self.epsilon or np.sum(self.qtable[state]) == 0:
+            # Explore
+            action = self.env.action_space.sample()
+        else:
+            # Exploit
+            action = np.argmax(self.qtable[tuple(state)])
+        return action
         # End your code
 
     def learn(self, state, action, reward, next_state, done):
@@ -125,7 +141,17 @@ class Agent():
         """
         # Begin your code
         # TODO
-        raise NotImplementedError("Not implemented yet.")
+        # raise NotImplementedError("Not implemented yet.")
+        # Calculate the new Q-value based on the Q-learning formula
+        q_next = np.max(self.qtable[tuple(next_state)])if not done else 0
+        q_current = self.qtable[tuple(state)][action]
+
+        # Update the Q-table with the new Q-value
+        q_newValue = (1 - self.learning_rate) * q_current + self.learning_rate \
+                    * (reward + self.gamma * q_next)
+
+        # Record the Q-value
+        self.qtable[tuple(state)][action] = q_newValue
         # End your code
         np.save("./Tables/cartpole_table.npy", self.qtable)
 
@@ -142,7 +168,10 @@ class Agent():
         """
         # Begin your code
         # TODO
-        raise NotImplementedError("Not implemented yet.")
+        # raise NotImplementedError("Not implemented yet.")
+        state = self.discretize_observation(self.env.reset())
+        max_q = np.max(self.qtable[tuple(state)])
+        return max_q
         # End your code
 
 
