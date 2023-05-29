@@ -52,7 +52,11 @@ class ExactInference(object):
 
     def observe(self, agentX: int, agentY: int, observedDist: float) -> None:
         # BEGIN_YOUR_CODE 
-        pass
+        for row in range(self.belief.numRows):
+            for col in range(self.belief.numCols):
+                dist = math.dist( ( util.colToX(col), util.rowToY(row) ), (agentX, agentY))
+                self.belief.setProb(row, col, self.belief.getProb(row, col) * util.pdf(dist, Const.SONAR_STD, observedDist))
+        self.belief.normalize()
         # END_YOUR_CODE
 
     ##################################################################################
@@ -79,7 +83,11 @@ class ExactInference(object):
         if self.skipElapse: ### ONLY FOR THE GRADER TO USE IN Part 1
             return
         # BEGIN_YOUR_CODE 
-        pass
+        newBeilf = util.Belief(self.belief.getNumRows(), self.belief.getNumCols(), value=0)
+        for (oldTile, newTile), transProb in self.transProb.items():
+            newBeilf.addProb(newTile[0], newTile[1], self.belief.getProb(oldTile[0], oldTile[1]) * transProb)
+        self.belief = newBeilf
+        self.belief.normalize()
         # END_YOUR_CODE
 
     # Function: Get Belief
@@ -181,7 +189,20 @@ class ParticleFilter(object):
     ##################################################################################
     def observe(self, agentX: int, agentY: int, observedDist: float) -> None:
         # BEGIN_YOUR_CODE
-
+        reweight = dict()
+        for (row, col), num in self.particles.items():
+            dist = math.dist( ( util.colToX(col), util.rowToY(row) ), (agentX, agentY))
+            reweight[(row,col)] = self.particles[(row, col)] * util.pdf(dist, Const.SONAR_STD, observedDist)
+        
+        resample = dict()
+        for i in range(self.NUM_PARTICLES):
+            particle = util.weightedRandomChoice(reweight)
+            if particle in resample:
+                resample[particle] += 1
+            else:
+                resample[particle] = 1
+                
+        self.particles = resample
         # END_YOUR_CODE
 
         self.updateBelief()
@@ -211,7 +232,15 @@ class ParticleFilter(object):
     ##################################################################################
     def elapseTime(self) -> None:
         # BEGIN_YOUR_CODE
-        pass 
+        proposal = collections.defaultdict(int)
+        for particle, num in self.particles.items():
+            for i in range(num):
+                x = util.weightedRandomChoice(self.transProbDict[particle])
+                if x in proposal:
+                    proposal[x] += 1
+                else:
+                    proposal[x] = 1
+        self.particles = proposal
         # END_YOUR_CODE
 
     # Function: Get Belief
