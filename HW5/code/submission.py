@@ -204,16 +204,20 @@ class ParticleFilter(object):
         reweight = dict()
         for (row, col), num in self.particles.items():
             dist = math.dist( ( util.colToX(col), util.rowToY(row) ), (agentX, agentY))
-            reweight[(row,col)] = self.particles[(row, col)] * util.pdf(dist, Const.SONAR_STD, observedDist)
+            num_particles = self.belief.getProb(row, col)
+            density = util.pdf(dist, Const.SONAR_STD, observedDist)
+            reweight[(row,col)] =  num_particles * density 
         
         resample = dict()
         for i in range(self.NUM_PARTICLES):
+            # Create a new dictionary during re-sampling the particles
             particle = util.weightedRandomChoice(reweight)
+            # Calculate the number of particles at that grid square
             if particle in resample:
                 resample[particle] += 1
             else:
-                resample[particle] = 1
-                
+                resample[particle] = 1  
+        # Update self.particles
         self.particles = resample
         # END_YOUR_CODE
 
@@ -244,12 +248,13 @@ class ParticleFilter(object):
     ##################################################################################
     def elapseTime(self) -> None:
         # BEGIN_YOUR_CODE
+        # Assigned a default value of 0 to each key
         proposal = collections.defaultdict(int)
         # loop over particles
         for particle, num in self.particles.items():
-            # if there are multiple particles at a particular location
+            # If there are multiple particles at a particular location
             for i in range(num):
-                # sample a new particle location for each of particles
+                # Sample a new particle location for each of particles
                 x = util.weightedRandomChoice(self.transProbDict[particle])
                 if x in proposal:
                     proposal[x] += 1
