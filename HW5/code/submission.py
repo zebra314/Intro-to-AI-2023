@@ -54,8 +54,12 @@ class ExactInference(object):
         # BEGIN_YOUR_CODE 
         for row in range(self.belief.numRows):
             for col in range(self.belief.numCols):
+                # Calculate the distance between the agent and the tile
                 dist = math.dist( ( util.colToX(col), util.rowToY(row) ), (agentX, agentY))
-                self.belief.setProb(row, col, self.belief.getProb(row, col) * util.pdf(dist, Const.SONAR_STD, observedDist))
+                # Update the belief
+                probability = self.belief.getProb(row, col) * util.pdf(dist, Const.SONAR_STD, observedDist)
+                self.belief.setProb(row, col, probability)
+        # Normalize the belief
         self.belief.normalize()
         # END_YOUR_CODE
 
@@ -83,9 +87,17 @@ class ExactInference(object):
         if self.skipElapse: ### ONLY FOR THE GRADER TO USE IN Part 1
             return
         # BEGIN_YOUR_CODE 
+        # Create a new belief
         newBeilf = util.Belief(self.belief.getNumRows(), self.belief.getNumCols(), value=0)
         for (oldTile, newTile), transProb in self.transProb.items():
-            newBeilf.addProb(newTile[0], newTile[1], self.belief.getProb(oldTile[0], oldTile[1]) * transProb)
+            # Get the row and col of the new tile
+            row = newTile[0]
+            col = newTile[1]
+            # Calculate the probability of the new tile
+            probability = self.belief.getProb(oldTile[0], oldTile[1]) * transProb
+            # Add the probability to the new belief
+            newBeilf.addProb(row, col, probability)
+        # Update and Normalize the belief
         self.belief = newBeilf
         self.belief.normalize()
         # END_YOUR_CODE
@@ -233,8 +245,11 @@ class ParticleFilter(object):
     def elapseTime(self) -> None:
         # BEGIN_YOUR_CODE
         proposal = collections.defaultdict(int)
+        # loop over particles
         for particle, num in self.particles.items():
+            # if there are multiple particles at a particular location
             for i in range(num):
+                # sample a new particle location for each of particles
                 x = util.weightedRandomChoice(self.transProbDict[particle])
                 if x in proposal:
                     proposal[x] += 1
